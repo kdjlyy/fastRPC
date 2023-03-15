@@ -49,6 +49,7 @@ var DefaultServer = NewServer()
 // for each incoming connection.
 func (server *Server) Accept(lis net.Listener) {
 	for {
+		// Accept 函数会阻塞程序，直到接收到来自端口的连接
 		cliConn, err := lis.Accept()
 		if err != nil {
 			log.Println("fastRPC server: accept error:", err)
