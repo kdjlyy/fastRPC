@@ -8,31 +8,6 @@ import (
 	"net"
 )
 
-/*
-客户端与服务端的通信需要协商一些内容
-目前fastRPC需要协商的唯一一项内容是消息的编解码方式。我们将这部分信息，放到结构体 Option 中承载
-
-服务端收到的报文格式：
-| Option{MagicNumber: xxx, ConnType: xxx} | Header{ServiceMethod ...} | Body interface{} |
-| <------      固定 JSON 编码      ------>  | <-------   编码方式由 CodeType 决定   ------->|
-服务端首先使用 JSON 解码 Option，然后通过 Option 的 CodeType 解码剩余的内容
-
-在一次连接中，Option 固定在报文的最开始，Header 和 Body 可以有多个，即报文可能是这样的
-| Option | Header1 | Body1 | Header2 | Body2 | ...
-*/
-
-const MagicNumber = 0x3bef5c
-
-type Option struct {
-	MagicNumber int       // MagicNumber 标记这是一个fastRPC请求
-	ConnType    conn.Type // ConnType 支持GobType和JsonType
-}
-
-var DefaultOption = &Option{
-	MagicNumber: MagicNumber,
-	ConnType:    conn.GobType,
-}
-
 // Server represents an RPC Server.
 type Server struct{}
 
@@ -73,13 +48,13 @@ func (server *Server) ServeConn(cliConn io.ReadWriteCloser) {
 	defer func() {
 		_ = cliConn.Close()
 	}()
-	var opt Option
+	var opt conn.Option
 	// 服务端解码报文Option部分
 	if err := json.NewDecoder(cliConn).Decode(&opt); err != nil {
 		log.Println("fastRPC server: options error: ", err)
 	}
 
-	if opt.MagicNumber != MagicNumber {
+	if opt.MagicNumber != conn.MagicNumber {
 		log.Printf("fastRPC server: invalid magic number %x", opt.MagicNumber)
 		return
 	}
