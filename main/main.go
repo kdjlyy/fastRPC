@@ -3,12 +3,26 @@ package main
 import (
 	"fastRPC/client"
 	"fastRPC/server"
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"sync"
-	"time"
 )
+
+var option = flag.String("o", "", "server or client")
+
+func main() {
+	log.SetFlags(log.Ldate | log.Ltime)
+	flag.Parse()
+
+	switch *option {
+	case "server":
+		startServer()
+	case "client":
+		startClient()
+	}
+}
 
 func startServer() {
 	// pick a free port
@@ -20,13 +34,7 @@ func startServer() {
 	server.Accept(l)
 }
 
-func main() {
-	log.SetFlags(0)
-	go startServer()
-
-	// 等待server拉起
-	time.Sleep(time.Second * 2)
-
+func startClient() {
 	c, _ := client.Dial("tcp", "127.0.0.1:12345")
 	defer func() { _ = c.Close() }()
 
