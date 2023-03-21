@@ -10,13 +10,13 @@ import (
 	"sync"
 )
 
-var option = flag.String("o", "", "server or client")
+var option1 = flag.String("o", "", "server or client")
 
-func main() {
+func main1() {
 	log.SetFlags(log.Ldate | log.Ltime)
 	flag.Parse()
 
-	switch *option {
+	switch *option1 {
 	case "server":
 		startServer()
 	case "client":
