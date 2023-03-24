@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fastRPC/conn"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 var (
@@ -58,37 +60,78 @@ func NewClient(nc net.Conn, opt *conn.Option) (*Client, error) {
 	return newClientConn(f(nc), opt), nil
 }
 
-// Dial connects to an RPC server at the specified network address
-// 实现 Dial 函数，便于用户传入服务端地址，创建 Client 实例。
-func Dial(network, address string, opts ...*conn.Option) (client *Client, err error) {
+type newClientFunc func(nc net.Conn, opt *conn.Option) (client *Client, err error)
+
+// dialTimeout 超时处理 将 NewClient 作为入参，在2个地方添加了超时处理的机制：
+// 1. net.DialTimeout，如果连接创建超时，将返回错误
+// 2. 使用子协程执行 NewClient，执行完成后则通过管道ch发送结果，如果 time.After() 管道先接收到消息，则说明 NewClient 执行超时，返回错误
+func dialTimeout(f newClientFunc, network, address string, opts ...*conn.Option) (client *Client, err error) {
 	opt, err := conn.ParseOptions(opts...)
 	if err != nil {
 		return nil, err
 	}
-
-	nc, err := net.Dial(network, address)
+	nc, err := net.DialTimeout(network, address, opt.ConnectTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO same as below?
-	//defer func() {
-	//	_ = clientConn.Close()
-	//}()
-
 	// close the connection if client is nil
 	defer func() {
-		if client == nil {
+		if err != nil {
 			_ = nc.Close()
 		}
 	}()
 
-	return NewClient(nc, opt)
+	type clientResult struct {
+		client *Client
+		err    error
+	}
+	ch := make(chan clientResult)
+	go func() {
+		client, err := f(nc, opt)
+		ch <- clientResult{client: client, err: err}
+	}()
+
+	if opt.ConnectTimeout == 0 {
+		result := <-ch
+		return result.client, result.err
+	}
+	select {
+	case <-time.After(opt.ConnectTimeout):
+		return nil, fmt.Errorf("fastRPC client: connect timeout: expect within %s", opt.ConnectTimeout)
+	case result := <-ch:
+		return result.client, result.err
+	}
+}
+
+// Dial connects to an RPC server at the specified network address
+// 实现 Dial 函数，便于用户传入服务端地址，创建 Client 实例。
+func Dial(network, address string, opts ...*conn.Option) (*Client, error) {
+	return dialTimeout(NewClient, network, address, opts...)
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
-// Call 是对 Go 的封装，阻塞读取管道 call.Done，等待响应返回，是一个同步接口
-func (c *Client) Call(serviceMethod string, args, reply interface{}) error {
-	call := <-c.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
-	return call.Error
+/*
+   Call 是对 Go 的封装，阻塞读取管道 call.Done，等待响应返回，是一个同步接口
+   Call 的超时处理机制，使用 context 包实现，控制权交给用户，控制更为灵活
+   用户可以使用 context.WithTimeout 创建具备超时检测能力的 context 对象来控制。例如：
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	var reply int
+ 	err := client.Call(ctx, "Foo.Sum", &Args{1, 2}, &reply)
+*/
+func (c *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
+	call := c.Go(serviceMethod, args, reply, make(chan *Call, 1))
+	select {
+	case <-ctx.Done():
+		c.removeCall(call.Seq)
+		return errors.New("fastRPC client: call failed: " + ctx.Err().Error())
+	case call := <-call.Done:
+		return call.Error
+	}
 }
+
+//func (c *Client) Call(serviceMethod string, args, reply interface{}) error {
+//	call := <-c.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+//	return call.Error
+//}

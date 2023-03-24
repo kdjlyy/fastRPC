@@ -1,6 +1,9 @@
 package conn
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 /*
 一个典型的 RPC 调用如下：
@@ -33,11 +36,16 @@ const (
 type Option struct {
 	MagicNumber int  // MagicNumber 标记这是一个fastRPC请求
 	ConnType    Type // ConnType 支持GobType和JsonType
+
+	// for timeout operation
+	ConnectTimeout time.Duration // 0 means no limit
+	HandleTimeout  time.Duration
 }
 
 var DefaultOption = &Option{
-	MagicNumber: MagicNumber,
-	ConnType:    GobType,
+	MagicNumber:    MagicNumber,
+	ConnType:       GobType,
+	ConnectTimeout: time.Second * 10,
 }
 
 type Header struct {

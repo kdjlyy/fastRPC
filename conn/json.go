@@ -63,5 +63,5 @@ func NewJsonConn(conn io.ReadWriteCloser) Conn {
 	}
 }
 
-// TODO ?
+// // 将nil转换为*JsonConn类型，然后再转换为Conn接口，如果转换失败，说明*JsonConn没有实现Conn接口的所有方法。
 var _ Conn = (*JsonConn)(nil)
