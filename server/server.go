@@ -26,6 +26,10 @@ func NewServer() *Server {
 // DefaultServer is the default instance of *Server.
 var DefaultServer = NewServer()
 
+//func (server *Server) GetServiceMap() *sync.Map {
+//	return &server.serviceMap
+//}
+
 func (server *Server) Register(this interface{}) error {
 	s := service.NewService(this)
 	if _, dup := server.serviceMap.LoadOrStore(s.GetName(), s); dup {

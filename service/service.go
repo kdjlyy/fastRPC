@@ -53,6 +53,8 @@ func (m *MethodType) NewReplyv() reflect.Value {
 
 // =================================================
 
+// Service format "Service.Method", e.g. "Foo.Sum"
+// 'Foo' is name, 'Method' is method.
 type Service struct {
 	this   reflect.Value          // 结构体的实例本身,调 用时需要 this 作为第 0 个参数
 	name   string                 // 映射的结构体的名称，如 WaitGroup

@@ -6,6 +6,8 @@ import (
 	"fastRPC/server"
 	"fmt"
 	"net"
+	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -82,4 +84,27 @@ func TestClient_Call(t *testing.T) {
 		err := c.Call(context.Background(), "Bar.Timeout", 1, &reply)
 		_assert(err != nil && strings.Contains(err.Error(), "handle timeout"), "expect a timeout error")
 	})
+}
+
+// 使用了 unix 协议创建 socket 连接，适用于本机内部的通信，使用上与 TCP 协议并无区别。
+func TestXDial(t *testing.T) {
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		ch := make(chan struct{})
+		addr := "/tmp/fastrpc.sock"
+
+		go func() {
+			_ = os.Remove(addr)
+			l, err := net.Listen("unix", addr)
+			if err != nil {
+				t.Error("failed to listen unix socket")
+				return
+			}
+			ch <- struct{}{}
+			server.Accept(l)
+		}()
+
+		<-ch
+		_, err := XDial("unix@" + addr)
+		_assert(err == nil, "failed to connect unix socket")
+	}
 }
