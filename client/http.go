@@ -43,7 +43,7 @@ func DialHTTP(network, address string, opts ...*conn.Option) (*Client, error) {
 func XDial(rpcAddr string, opts ...*conn.Option) (*Client, error) {
 	parts := strings.Split(rpcAddr, "@")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("fastRPC client err: wrong format '%s', expect protocol@addr", rpcAddr)
+		return nil, fmt.Errorf("FastRPC client err: wrong format '%s', expect protocol@addr", rpcAddr)
 	}
 
 	protocol, addr := parts[0], parts[1]

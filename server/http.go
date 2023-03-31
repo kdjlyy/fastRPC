@@ -19,7 +19,7 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Hijack 可以将一个 http.ResponseWriter 接口转换为一个 net.Conn 接口，这意味着程序可以直接读取和写入底层的 TCP 连接
 	nc, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Print("fastRPC hijacking ", req.RemoteAddr, ": ", err.Error())
+		log.Print("FastRPC hijacking ", req.RemoteAddr, ": ", err.Error())
 		return
 	}
 	_, _ = io.WriteString(nc, "HTTP/1.0 "+html_rpc.Connected+"\n\n")
@@ -33,7 +33,7 @@ func (server *Server) HandleHTTP() {
 
 	// for debug
 	http.Handle(html_rpc.DefaultDebugPath, debugHTTP{server})
-	log.Println("fastRPC server debug path:", html_rpc.DefaultDebugPath)
+	log.Println("FastRPC server debug path:", html_rpc.DefaultDebugPath)
 }
 
 // HandleHTTP is a convenient approach for default server to register HTTP handlers

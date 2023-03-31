@@ -54,6 +54,6 @@ func (server debugHTTP) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	err := debug.Execute(w, services)
 	if err != nil {
-		_, _ = fmt.Fprintln(w, "fastRPC: error executing template:", err.Error())
+		_, _ = fmt.Fprintln(w, "FastRPC: error executing template:", err.Error())
 	}
 }

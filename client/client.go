@@ -46,20 +46,20 @@ func NewClient(nc net.Conn, opt *conn.Option) (*Client, error) {
 	f := conn.NewConnFuncMap[opt.ConnType]
 	if f == nil {
 		err := fmt.Errorf("invalid connection type %s", opt.ConnType)
-		log.Println("fastRPC client: connection type error:", err)
+		log.Println("FastRPC client: connection type error:", err)
 		return nil, err
 	}
 
 	// send options with server
 	if err := json.NewEncoder(nc).Encode(opt); err != nil {
-		log.Println("fastRPC client: option encode error: ", err)
+		log.Println("FastRPC client: option encode error: ", err)
 		_ = nc.Close()
 		return nil, err
 	}
 
 	// TODO: 解决粘包问题
 	if err := json.NewDecoder(nc).Decode(opt); err != nil {
-		log.Printf("fastRPC client: option decode error: %s", err.Error())
+		log.Printf("FastRPC client: option decode error: %s", err.Error())
 		_ = nc.Close()
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*conn.Option)
 	}
 	select {
 	case <-time.After(opt.ConnectTimeout):
-		return nil, fmt.Errorf("fastRPC client: connect timeout: expect within %s", opt.ConnectTimeout)
+		return nil, fmt.Errorf("FastRPC client: connect timeout: expect within %s", opt.ConnectTimeout)
 	case result := <-ch:
 		return result.client, result.err
 	}
@@ -132,7 +132,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args, reply int
 	select {
 	case <-ctx.Done():
 		c.removeCall(call.Seq)
-		return errors.New("fastRPC client: call failed: " + ctx.Err().Error())
+		return errors.New("FastRPC client: call failed: " + ctx.Err().Error())
 	case call := <-call.Done:
 		return call.Error
 	}

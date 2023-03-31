@@ -3,3 +3,4 @@
 *.drawio
 *.bkp
 /load_balance/main/main
+/registry/main/main

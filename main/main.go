@@ -52,7 +52,7 @@ func StartServer() {
 	if err != nil {
 		log.Fatal("network error:", err)
 	}
-	log.Println("start fastRPC server on", l.Addr())
+	log.Println("start FastRPC server on", l.Addr())
 	//server.Accept(l)
 	server.HandleHTTP()
 	_ = http.Serve(l, nil)

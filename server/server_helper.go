@@ -67,7 +67,7 @@ func (server *Server) readRequestHeader(cc conn.Conn) (*conn.Header, error) {
 	var h conn.Header
 	if err := cc.ReadHeader(&h); err != nil {
 		if err != io.EOF && err != io.ErrUnexpectedEOF {
-			log.Println("fastRPC server: read header error:", err)
+			log.Println("FastRPC server: read header error:", err)
 		}
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (server *Server) readRequest(cc conn.Conn) (*request, error) {
 	}
 
 	if err = cc.ReadBody(argvInterface); err != nil {
-		log.Println("fastRPC server: read body err:", err)
+		log.Println("FastRPC server: read body err:", err)
 	}
 	return req, nil
 }
@@ -104,7 +104,7 @@ func (server *Server) sendResponse(cc conn.Conn, h *conn.Header, body interface{
 	mutexSendResp.Lock()
 	defer mutexSendResp.Unlock()
 	if err := cc.Write(h, body); err != nil {
-		log.Println("fastRPC server: write response error:", err)
+		log.Println("FastRPC server: write response error:", err)
 	}
 }
 
@@ -137,7 +137,7 @@ func (server *Server) handleRequest(cc conn.Conn, req *request, sending *sync.Mu
 	}
 	select {
 	case <-time.After(timeout):
-		req.header.Error = fmt.Sprintf("fastRPC server: request handle timeout: expect within %s", timeout)
+		req.header.Error = fmt.Sprintf("FastRPC server: request handle timeout: expect within %s", timeout)
 		server.sendResponse(cc, req.header, invalidRequest, sending)
 	case <-called:
 		<-sent

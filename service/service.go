@@ -76,7 +76,7 @@ func NewService(this interface{}) *Service {
 
 	// 判断一个标识符是否是导出的
 	if !ast.IsExported(s.name) {
-		log.Fatalf("fastRPC server: %s is not a valid service name", s.name)
+		log.Fatalf("FastRPC server: %s is not a valid service name", s.name)
 	}
 
 	s.registerMethods()
@@ -115,7 +115,7 @@ func (s *Service) registerMethods() {
 			ArgType:   argType,
 			ReplyType: replyType,
 		}
-		log.Printf("fastRPC server: register %s.%s\n", s.name, method.Name)
+		log.Printf("FastRPC server: register %s.%s\n", s.name, method.Name)
 	}
 }
 

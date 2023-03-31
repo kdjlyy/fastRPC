@@ -33,7 +33,7 @@ var DefaultServer = NewServer()
 func (server *Server) Register(this interface{}) error {
 	s := service.NewService(this)
 	if _, dup := server.serviceMap.LoadOrStore(s.GetName(), s); dup {
-		return errors.New("fastRPC: service already defined: " + s.GetName())
+		return errors.New("FastRPC: service already defined: " + s.GetName())
 	}
 	return nil
 }
@@ -45,21 +45,21 @@ func Register(this interface{}) error { return DefaultServer.Register(this) }
 func (server *Server) findService(serviceMethod string) (svc *service.Service, mType *service.MethodType, err error) {
 	dot := strings.LastIndex(serviceMethod, ".")
 	if dot < 0 {
-		err = errors.New("fastRPC server: service/method request ill-formed: " + serviceMethod)
+		err = errors.New("FastRPC server: service/method request ill-formed: " + serviceMethod)
 		return
 	}
 
 	serviceName, methodName := serviceMethod[:dot], serviceMethod[dot+1:]
 	svcInterface, ok := server.serviceMap.Load(serviceName)
 	if !ok {
-		err = errors.New("fastRPC server: can't find service: " + serviceName)
+		err = errors.New("FastRPC server: can't find service: " + serviceName)
 		return
 	}
 
 	svc = svcInterface.(*service.Service)
 	mType = svc.GetMethod(methodName)
 	if mType == nil {
-		err = errors.New("fastRPC server: can't find method: " + methodName)
+		err = errors.New("FastRPC server: can't find method: " + methodName)
 	}
 
 	return
@@ -74,7 +74,7 @@ func (server *Server) Accept(lis net.Listener) {
 		// Accept 函数会阻塞程序，直到接收到来自端口的连接
 		cliConn, err := lis.Accept()
 		if err != nil {
-			log.Println("fastRPC server: accept error:", err)
+			log.Println("FastRPC server: accept error:", err)
 			return
 		}
 
@@ -99,23 +99,23 @@ func (server *Server) ServeConn(cliConn io.ReadWriteCloser) {
 	var opt conn.Option
 	// 服务端解码报文Option部分
 	if err := json.NewDecoder(cliConn).Decode(&opt); err != nil {
-		log.Println("fastRPC server: option decode error: ", err)
+		log.Println("FastRPC server: option decode error: ", err)
 	}
 
 	if opt.MagicNumber != conn.MagicNumber {
-		log.Printf("fastRPC server: invalid magic number %x", opt.MagicNumber)
+		log.Printf("FastRPC server: invalid magic number %x", opt.MagicNumber)
 		return
 	}
 
 	f := conn.NewConnFuncMap[opt.ConnType]
 	if f == nil {
-		log.Printf("fastRPC server: invalid conn type %s", opt.ConnType)
+		log.Printf("FastRPC server: invalid conn type %s", opt.ConnType)
 		return
 	}
 
 	// TODO: 解决粘包问题
 	if err := json.NewEncoder(cliConn).Encode(opt); err != nil {
-		log.Printf("fastRPC server: option encode error: %s", err.Error())
+		log.Printf("FastRPC server: option encode error: %s", err.Error())
 		return
 	}
 

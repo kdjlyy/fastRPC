@@ -40,11 +40,11 @@ func (c *GobConn) Write(header *Header, body interface{}) (err error) {
 	}()
 
 	if err := c.encoder.Encode(header); err != nil {
-		log.Println("fastRPC conn: gob error while encoding header:", err)
+		log.Println("FastRPC conn: gob error while encoding header:", err)
 		return err
 	}
 	if err := c.encoder.Encode(body); err != nil {
-		log.Println("fastRPC conn: gob error while encoding body:", err)
+		log.Println("FastRPC conn: gob error while encoding body:", err)
 		return err
 	}
 

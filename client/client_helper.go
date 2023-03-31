@@ -94,7 +94,7 @@ func (c *Client) Go(serviceMethod string, args, reply interface{}, done chan *Ca
 	if done == nil {
 		done = make(chan *Call, 10)
 	} else if cap(done) == 0 {
-		log.Panic("fastRPC client: done channel is unbuffered")
+		log.Panic("FastRPC client: done channel is unbuffered")
 	}
 
 	call := &Call{

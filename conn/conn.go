@@ -32,9 +32,9 @@ const (
 )
 
 // Option 客户端与服务端的通信需要协商一些内容
-// 目前fastRPC需要协商的唯一一项内容是消息的编解码方式。我们将这部分信息，放到结构体 Option 中承载
+// 目前FastRPC需要协商的唯一一项内容是消息的编解码方式。我们将这部分信息，放到结构体 Option 中承载
 type Option struct {
-	MagicNumber int  // MagicNumber 标记这是一个fastRPC请求
+	MagicNumber int  // MagicNumber 标记这是一个FastRPC请求
 	ConnType    Type // ConnType 支持GobType和JsonType
 
 	// for timeout operation

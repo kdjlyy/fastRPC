@@ -23,7 +23,7 @@ func startServer() {
 	if err != nil {
 		log.Fatal("network error:", err)
 	}
-	log.Println("start fastRPC server on", l.Addr())
+	log.Println("start FastRPC server on", l.Addr())
 	server.Accept(l)
 }
 
@@ -31,7 +31,7 @@ func TestFastRpcServer(t *testing.T) {
 	go startServer()
 
 	// =======================================
-	// ====== a simple fastRPC client ========
+	// ====== a simple FastRPC client ========
 	// =======================================
 	time.Sleep(time.Second * 2) // wait for server established
 	clientConn, _ := net.Dial("tcp", "127.0.0.1:12345")

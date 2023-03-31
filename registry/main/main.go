@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fastRPC/load_balance/xclient"
+	"fastRPC/registry"
 	"fastRPC/server"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 )
 
 type Foo int
-
 type Args struct{ Num1, Num2 int }
 
 func (f *Foo) Sum(args Args, reply *int) error {
@@ -25,14 +26,26 @@ func (f *Foo) Sleep(args Args, reply *int) error {
 	return nil
 }
 
-func startServer(addrCh chan string) {
+// ==================================================
+
+func startRegistry(wg *sync.WaitGroup) {
+	l, _ := net.Listen("tcp", ":9999")
+	registry.HandleHTTP()
+	wg.Done()
+	_ = http.Serve(l, nil)
+}
+
+func startServer(registryAddr string, wg *sync.WaitGroup) {
 	var foo Foo
 	l, _ := net.Listen("tcp", ":0")
 	srv := server.NewServer()
 	_ = srv.Register(&foo)
-	addrCh <- l.Addr().String()
+	registry.Heartbeat(registryAddr, "tcp@"+l.Addr().String(), 0)
+	wg.Done()
 	srv.Accept(l)
 }
+
+// ==================================================
 
 // 封装一个方法 foo，便于在 Call 或 Broadcast 之后统一打印成功或失败的日志
 func foo(xc *xclient.XClient, ctx context.Context, typ, serviceMethod string, args *Args) {
@@ -51,9 +64,8 @@ func foo(xc *xclient.XClient, ctx context.Context, typ, serviceMethod string, ar
 	}
 }
 
-// call 调用单个服务实例，broadcast 调用所有服务实例
-func call(addr1, addr2 string) {
-	d := xclient.NewMultiServerDiscovery([]string{"tcp@" + addr1, "tcp@" + addr2})
+func call(registry string) {
+	d := xclient.NewFastRegistryDiscovery(registry, 0)
 	xc := xclient.NewXClient(d, xclient.RandomSelect, nil)
 	defer func() { _ = xc.Close() }()
 	// send request & receive response
@@ -68,8 +80,8 @@ func call(addr1, addr2 string) {
 	wg.Wait()
 }
 
-func broadcast(addr1, addr2 string) {
-	d := xclient.NewMultiServerDiscovery([]string{"tcp@" + addr1, "tcp@" + addr2})
+func broadcast(registry string) {
+	d := xclient.NewFastRegistryDiscovery(registry, 0)
 	xc := xclient.NewXClient(d, xclient.RandomSelect, nil)
 	defer func() { _ = xc.Close() }()
 	var wg sync.WaitGroup
@@ -86,21 +98,23 @@ func broadcast(addr1, addr2 string) {
 	wg.Wait()
 }
 
+// ==================================================
+
 func main() {
 	log.SetFlags(0)
-	ch1 := make(chan string)
-	ch2 := make(chan string)
-
-	// start two servers
-	go startServer(ch1)
-	go startServer(ch2)
-
-	addr1 := <-ch1
-	addr2 := <-ch2
-
-	log.Printf("addr1: %s, addr2: %s\n", addr1, addr2)
+	registryAddr := "http://localhost:9999/fastrpc/registry"
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go startRegistry(&wg)
+	wg.Wait()
 
 	time.Sleep(time.Second)
-	call(addr1, addr2)
-	broadcast(addr1, addr2)
+	wg.Add(2)
+	go startServer(registryAddr, &wg)
+	go startServer(registryAddr, &wg)
+	wg.Wait()
+
+	time.Sleep(time.Second)
+	call(registryAddr)
+	broadcast(registryAddr)
 }

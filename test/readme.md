@@ -1,5 +1,5 @@
 # demo
-测试fastRPC服务端能否正常工作的Demo（模拟客户端的方式）
+测试FastRPC服务端能否正常工作的Demo（模拟客户端的方式）
 ---
 ### demo架构图
 <img src="../sources/fastRPC_demo.drawio.png" style="zoom: 25%;" />
