@@ -1,4 +1,5 @@
 /.idea
-/main/main*
+/main/main
 *.drawio
 *.bkp
+/load_balance/main/main

@@ -99,7 +99,7 @@ func (server *Server) ServeConn(cliConn io.ReadWriteCloser) {
 	var opt conn.Option
 	// 服务端解码报文Option部分
 	if err := json.NewDecoder(cliConn).Decode(&opt); err != nil {
-		log.Println("fastRPC server: options error: ", err)
+		log.Println("fastRPC server: option decode error: ", err)
 	}
 
 	if opt.MagicNumber != conn.MagicNumber {
@@ -110,6 +110,12 @@ func (server *Server) ServeConn(cliConn io.ReadWriteCloser) {
 	f := conn.NewConnFuncMap[opt.ConnType]
 	if f == nil {
 		log.Printf("fastRPC server: invalid conn type %s", opt.ConnType)
+		return
+	}
+
+	// TODO: 解决粘包问题
+	if err := json.NewEncoder(cliConn).Encode(opt); err != nil {
+		log.Printf("fastRPC server: option encode error: %s", err.Error())
 		return
 	}
 

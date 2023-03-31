@@ -52,7 +52,14 @@ func NewClient(nc net.Conn, opt *conn.Option) (*Client, error) {
 
 	// send options with server
 	if err := json.NewEncoder(nc).Encode(opt); err != nil {
-		log.Println("fastRPC client: option error: ", err)
+		log.Println("fastRPC client: option encode error: ", err)
+		_ = nc.Close()
+		return nil, err
+	}
+
+	// TODO: 解决粘包问题
+	if err := json.NewDecoder(nc).Decode(opt); err != nil {
+		log.Printf("fastRPC client: option decode error: %s", err.Error())
 		_ = nc.Close()
 		return nil, err
 	}

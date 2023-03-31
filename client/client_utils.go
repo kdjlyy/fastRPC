@@ -3,18 +3,16 @@ package client
 import "io"
 
 // IsAvailable return true while the client available currently
-// Notice:unsafe, need sync.Mutex
 func (c *Client) IsAvailable() bool {
-	//client.mu.Lock()
-	//defer client.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return !c.shutdown && !c.closing
 }
 
 // NotAvailable return true while the client not available currently
-// Notice:unsafe, need sync.Mutex
 func (c *Client) NotAvailable() bool {
-	//client.mu.Lock()
-	//defer client.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.shutdown || c.closing
 }
 
@@ -39,7 +37,8 @@ var _ io.Closer = (*Client)(nil)
 func (c *Client) registerCall(call *Call) (uint64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.NotAvailable() {
+
+	if c.shutdown || c.closing {
 		return 0, ErrConnNotAvailable
 	}
 
